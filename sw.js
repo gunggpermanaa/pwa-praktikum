@@ -1,12 +1,19 @@
 const CACHE_NAME = "pwa-cache-v1";
 
 const urlsToCache = [
-  "/",
-  "/index.html",
-  "/style.css",
-  "/about.html",
-  "/offline.html",
+  '/',
+  '/index.html',
+  '/style.css',
+  '/app.js',
+  '/about.html',
+  '/offline.html',
+  '/manifest.json',
+
+  // ICONS WAJIB DICACHE
+  '/images/icon-192x192.png',
+  '/images/icon-512x512.png',
 ];
+
 
 // ============================
 // Install Service Worker
