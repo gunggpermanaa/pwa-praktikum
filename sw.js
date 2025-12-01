@@ -1,44 +1,58 @@
-const CACHE_NAME = 'pwa-cache-v2';
+const CACHE_NAME = "pwa-cache-v1";
+
 const urlsToCache = [
-    '/',
-    '/index.html',
-    '/style.css',
-    '/about.html',
-    '/offline.html',
-    '/script.js'
+  "/",
+  "/index.html",
+  "/style.css",
+  "/about.html",
+  "/offline.html",
 ];
 
-self.addEventListener('install', event => {
-    event.waitUntil(
-        caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache))
-    );
+// ============================
+// Install Service Worker
+// ============================
+self.addEventListener("install", (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll(urlsToCache);
+    })
+  );
+
+  self.skipWaiting(); // Optional: langsung aktif
 });
 
-self.addEventListener('activate', event => {
-    event.waitUntil(
-        caches.keys().then(keys =>
-            Promise.all(
-                keys.map(k => {
-                    if (k !== CACHE_NAME) return caches.delete(k);
-                })
-            )
-        )
-    );
+// ============================
+// Activate Service Worker
+// ============================
+self.addEventListener("activate", (event) => {
+  event.waitUntil(
+    caches.keys().then((names) => {
+      return Promise.all(
+        names.map((cache) => {
+          if (cache !== CACHE_NAME) {
+            return caches.delete(cache);
+          }
+        })
+      );
+    })
+  );
+
+  self.clients.claim(); // Optional: langsung mengambil kontrol
 });
 
-// Respond fetch
-self.addEventListener('fetch', event => {
-    event.respondWith(
-        caches.match(event.request).then(response =>
-            response || fetch(event.request).catch(() => caches.match('/offline.html'))
-        )
-    );
-});
+// ============================
+// Fetch Handler
+// ============================
+self.addEventListener("fetch", (event) => {
+  event.respondWith(
+    caches.match(event.request).then((response) => {
+      // Jika ada di cache → gunakan
+      if (response) return response;
 
-// OPTIONAL – Jika notifikasi diklik
-self.addEventListener("notificationclick", event => {
-    event.notification.close();
-    event.waitUntil(
-        clients.openWindow("/")
-    );
+      // Jika tidak ada di cache → ambil online
+      return fetch(event.request).catch(() => {
+        return caches.match("/offline.html");
+      });
+    })
+  );
 });

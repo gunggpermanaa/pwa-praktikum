@@ -1,81 +1,60 @@
+// ==============================
 // Register Service Worker
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js')
-        .then(reg => console.log('SW registered:', reg))
-        .catch(err => console.log('SW fail:', err));
-}
-
-// === POPUP IZIN NOTIFIKASI ===
-const notifPopup = document.getElementById("notifPopup");
-const allowNotifBtn = document.getElementById("allowNotifBtn");
-const denyNotifBtn = document.getElementById("denyNotifBtn");
-
-// Tampilkan popup hanya sekali
-if (!localStorage.getItem("notifPermissionAsked")) {
-    notifPopup.classList.remove("hidden");
-}
-
-// Jika klik IZINKAN
-allowNotifBtn.addEventListener("click", async () => {
-    notifPopup.classList.add("hidden");
-
-    const permission = await Notification.requestPermission();
-
-    if (permission === "granted") {
-        navigator.serviceWorker.ready.then(reg => {
-            reg.showNotification("Terima kasih!", {
-                body: "Notifikasi telah diaktifkan.",
-                icon: "/images/icon-192x192.png"
+// ==============================
+if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+        navigator.serviceWorker.register("/sw.js")
+            .then(registration => {
+                console.log("Service Worker registered:", registration);
+            })
+            .catch(err => {
+                console.error("Service Worker registration failed:", err);
             });
-        });
-    }
+    });
+}
 
-    // Jangan tampilkan popup lagi
-    localStorage.setItem("notifPermissionAsked", "yes");
-});
+// ==============================
+// Request Permission (Optional)
+// ==============================
+if ("Notification" in window) {
+    Notification.requestPermission();
+}
 
-// Jika klik NANTI SAJA
-denyNotifBtn.addEventListener("click", () => {
-    notifPopup.classList.add("hidden");
-    localStorage.setItem("notifPermissionAsked", "yes");
-});
-
-
-// === TES NOTIFIKASI BUTTON ===
+// ==============================
+// Tes Notifikasi
+// ==============================
 const notifyBtn = document.getElementById("notifyBtn");
 const notifStatus = document.getElementById("notifStatus");
 
-notifyBtn.addEventListener("click", async () => {
-
+notifyBtn.addEventListener("click", () => {
+    // Ubah tampilan tombol
     notifyBtn.innerText = "Mengirim...";
     notifyBtn.disabled = true;
-    notifyBtn.style.opacity = "0.6";
+    notifyBtn.style.opacity = "0.7";
 
-    const permission = await Notification.requestPermission();
+    Notification.requestPermission().then(permission => {
+        if (permission === "granted") {
 
-    if (permission !== "granted") {
-        notifStatus.innerText = "❌ Izinkan notifikasi terlebih dahulu.";
-        resetBtn();
-        return;
-    }
+            new Notification("Notifikasi dari PWA", {
+                body: "Berhasil! Ini notifikasi test.",
+                icon: "/images/icon-192x192.png"
+            });
 
-    navigator.serviceWorker.ready.then(reg => {
-        reg.showNotification("Tes Notifikasi", {
-            body: "Notifikasi berhasil dikirim!",
-            icon: "/images/icon-192x192.png",
-        });
+            notifStatus.innerText = "✅ Notifikasi berhasil dikirim!";
+        } else {
+            notifStatus.innerText = "❌ Notifikasi ditolak.";
+        }
+
+        // Kembalikan tombol normal
+        setTimeout(() => {
+            notifyBtn.innerText = "Tes Notifikasi";
+            notifyBtn.disabled = false;
+            notifyBtn.style.opacity = "1";
+        }, 1000);
+
+        // Hilangkan teks status setelah 2 detik
+        setTimeout(() => {
+            notifStatus.innerText = "";
+        }, 2000);
     });
-
-    notifStatus.innerText = "✅ Notifikasi berhasil dikirim!";
-    resetBtn();
 });
-
-function resetBtn() {
-    setTimeout(() => {
-        notifyBtn.innerText = "Tes Notifikasi";
-        notifyBtn.disabled = false;
-        notifyBtn.style.opacity = "1";
-    }, 1000);
-
-    setTimeout(() => notifStatus.innerText = "", 2000);
-}
