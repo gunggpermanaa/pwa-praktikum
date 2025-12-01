@@ -1,47 +1,42 @@
-// =======================
+// ==============================
 // Register Service Worker
-// =======================
+// ==============================
 if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => {
         navigator.serviceWorker.register("/sw.js")
-            .then(reg => console.log("SW registered"))
-            .catch(err => console.log("SW failed:", err));
+            .then(registration => {
+                console.log("Service Worker registered:", registration);
+            })
+            .catch(err => {
+                console.error("Service Worker registration failed:", err);
+            });
     });
 }
 
-// =======================
-// Elemen UI
-// =======================
+// ==============================
+// Request Permission (Optional)
+// ==============================
+if ("Notification" in window) {
+    Notification.requestPermission();
+}
+
+// ==============================
+// Tes Notifikasi
+// ==============================
 const notifyBtn = document.getElementById("notifyBtn");
 const notifStatus = document.getElementById("notifStatus");
 
-// =======================
-// Deteksi iPhone / Safari
-// =======================
-const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
-const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-const isPWA = window.navigator.standalone === true;
-
-// Jika iPhone + Safari + bukan PWA → blok notifikasi
-if (isIOS && isSafari && !isPWA) {
-    notifStatus.innerText =
-        "👉 Untuk mengaktifkan notifikasi, install aplikasi ke Home Screen.\n" +
-        "Tekan tombol Share → Add to Home Screen.";
-
-    notifyBtn.disabled = true;
-    notifyBtn.style.opacity = "0.5";
-    notifyBtn.style.cursor = "not-allowed";
-}
-
-// =======================
-// Tombol Tes Notifikasi
-// =======================
 notifyBtn.addEventListener("click", () => {
+    // Ubah tampilan tombol
+    notifyBtn.innerText = "Mengirim...";
+    notifyBtn.disabled = true;
+    notifyBtn.style.opacity = "0.7";
 
     Notification.requestPermission().then(permission => {
         if (permission === "granted") {
+
             new Notification("Notifikasi dari PWA", {
-                body: "Berhasil! Notifikasi berjalan.",
+                body: "Berhasil! Ini notifikasi test.",
                 icon: "/images/icon-192x192.png"
             });
 
@@ -49,5 +44,17 @@ notifyBtn.addEventListener("click", () => {
         } else {
             notifStatus.innerText = "❌ Notifikasi ditolak.";
         }
+
+        // Kembalikan tombol normal
+        setTimeout(() => {
+            notifyBtn.innerText = "Tes Notifikasi";
+            notifyBtn.disabled = false;
+            notifyBtn.style.opacity = "1";
+        }, 1000);
+
+        // Hilangkan teks status setelah 2 detik
+        setTimeout(() => {
+            notifStatus.innerText = "";
+        }, 2000);
     });
 });
