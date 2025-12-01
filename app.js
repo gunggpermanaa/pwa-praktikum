@@ -1,3 +1,4 @@
+// Register Service Worker
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js')
@@ -5,51 +6,54 @@ if ('serviceWorker' in navigator) {
             console.log('Service Worker registered:', registration);
         })
         .catch(err => {
-            console.error('Service Worker registration failed:', err);
+            console.error('SW registration failed:', err);
         });
     });
 }
 
-// Optional: request permission for notifications
+// Request permission on load
 if ("Notification" in window) {
     Notification.requestPermission();
 }
 
-// === Tes Notifikasi ===
+// === Tes Notifikasi yang SUPPORT Android ===
 const notifyBtn = document.getElementById("notifyBtn");
 const notifStatus = document.getElementById("notifStatus");
 
-notifyBtn.addEventListener("click", () => {
+notifyBtn.addEventListener("click", async () => {
 
-    // Ubah tampilan tombol
     notifyBtn.innerText = "Mengirim...";
     notifyBtn.disabled = true;
-    notifyBtn.style.opacity = "0.7";
+    notifyBtn.style.opacity = "0.6";
 
-    Notification.requestPermission().then(permission => {
-        if (permission === "granted") {
+    const permission = await Notification.requestPermission();
 
-            new Notification("Notifikasi dari PWA", {
-                body: "Berhasil! Ini notifikasi test.",
-                icon: "/images/icon-192x192.png"
-            });
+    if (permission !== "granted") {
+        notifStatus.innerText = "❌ Izinkan notifikasi terlebih dahulu.";
+        resetButton();
+        return;
+    }
 
-            notifStatus.innerText = "✅ Notifikasi berhasil dikirim!";
-        } else {
-            notifStatus.innerText = "❌ Notifikasi ditolak.";
-        }
-
-        // Kembalikan tombol normal
-        setTimeout(() => {
-            notifyBtn.innerText = "Tes Notifikasi";
-            notifyBtn.disabled = false;
-            notifyBtn.style.opacity = "1";
-        }, 1000);
-
-        // Hilangkan teks status setelah 2 detik
-        setTimeout(() => {
-            notifStatus.innerText = "";
-        }, 2000);
-
+    navigator.serviceWorker.ready.then(reg => {
+        reg.showNotification("Notifikasi dari PWA", {
+            body: "Berhasil! Notifikasi dari Service Worker.",
+            icon: "/images/icon-192x192.png",
+            vibrate: [100, 50, 100]
+        });
     });
+
+    notifStatus.innerText = "✅ Notifikasi berhasil dikirim!";
+
+    resetButton();
 });
+
+// === Utility ===
+function resetButton() {
+    setTimeout(() => {
+        notifyBtn.innerText = "Tes Notifikasi";
+        notifyBtn.disabled = false;
+        notifyBtn.style.opacity = "1";
+    }, 800);
+
+    setTimeout(() => notifStatus.innerText = "", 1500);
+}
