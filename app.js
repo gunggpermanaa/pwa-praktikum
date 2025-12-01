@@ -56,5 +56,30 @@ notifyBtn.addEventListener("click", () => {
         setTimeout(() => {
             notifStatus.innerText = "";
         }, 2000);
+
+        // DETEKSI iPhone
+const isIOS = /iphone|ipad|ipod/i.test(window.navigator.userAgent);
+
+// DETEKSI Safari iOS (bukan Chrome/Firefox)
+const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+
+// DETEKSI apakah PWA (dibuka dari Home Screen)
+const isPWA = window.navigator.standalone === true;
+
+// Element UI
+const notifyBtn = document.getElementById("notifyBtn");
+const notifStatus = document.getElementById("notifStatus");
+
+// Logika Deteksi
+if (isIOS && isSafari && !isPWA) {
+    notifStatus.innerText = 
+      "👉 Untuk mengaktifkan notifikasi, install aplikasi ke Home Screen.\n" +
+      "Buka menu Share → Add to Home Screen.";
+
+    notifyBtn.disabled = true;
+    notifyBtn.style.opacity = "0.5";
+    notifyBtn.style.cursor = "not-allowed";
+}
+
     });
 });
