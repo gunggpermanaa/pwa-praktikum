@@ -126,3 +126,11 @@ navigator.serviceWorker.ready.then(reg => {
   }
 });
 
+reg.showNotification("Notifikasi dari PWA", {
+  body: "Berhasil! Ini notifikasi test dari Service Worker (Desktop).",
+  icon: "/images/icon-192x192.png",
+  badge: "/images/icon-192x192.png",
+  tag: "pwa-test",               // mencegah Chrome menggabung notif
+  renotify: true,                // biar notif baru selalu tampil
+  requireInteraction: true,      // notif tidak langsung hilang
+});

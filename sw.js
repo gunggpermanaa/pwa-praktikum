@@ -123,3 +123,12 @@ self.addEventListener("push", event => {
     })
   );
 });
+
+self.registration.showNotification("Notifikasi dari PWA (Desktop)", {
+  body: "Testing notifikasi Chrome Windows.",
+  icon: "/images/icon-192x192.png",
+  badge: "/images/icon-192x192.png",
+  tag: "desktop",
+  renotify: true,
+  requireInteraction: true
+});
