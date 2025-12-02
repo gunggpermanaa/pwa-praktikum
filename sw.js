@@ -93,3 +93,33 @@ self.addEventListener("notificationclick", (event) => {
     })
   );
 });
+
+// ==============================
+// MENANGANI CLICK NOTIFIKASI (WAJIB UNTUK DESKTOP CHROME)
+// ==============================
+self.addEventListener("notificationclick", event => {
+  event.notification.close();
+
+  // buka halaman utama aplikasi
+  event.waitUntil(
+    clients.matchAll({ type: "window", includeUncontrolled: true }).then(clientList => {
+      // fokuskan tab yang sudah terbuka
+      for (const client of clientList) {
+        if (client.url === "/" && "focus" in client) return client.focus();
+      }
+      // atau buka tab baru
+      if (clients.openWindow) return clients.openWindow("/");
+    })
+  );
+});
+
+// OPTIONAL fallback handler (tidak ganggu logic utama)
+self.addEventListener("push", event => {
+  event.waitUntil(
+    self.registration.showNotification("Notifikasi dari PWA", {
+      body: "Ini fallback notifikasi.",
+      icon: "/icons/icon-192x192.png",
+      badge: "/icons/icon-192x192.png"
+    })
+  );
+});

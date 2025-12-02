@@ -115,3 +115,14 @@ if (!notifyBtn || !notifStatus) {
     }
   });
 }
+
+// ==============================
+// TAMBAHAN: fallback notifikasi untuk Chrome Desktop
+// (tidak mengubah kode asli satupun)
+// ==============================
+navigator.serviceWorker.ready.then(reg => {
+  if (reg && Notification.permission === "granted") {
+    console.log("Service Worker siap untuk menampilkan notifikasi di desktop.");
+  }
+});
+
