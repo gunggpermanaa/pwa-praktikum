@@ -115,22 +115,3 @@ if (!notifyBtn || !notifStatus) {
     }
   });
 }
-
-// ==============================
-// TAMBAHAN: fallback notifikasi untuk Chrome Desktop
-// (tidak mengubah kode asli satupun)
-// ==============================
-navigator.serviceWorker.ready.then(reg => {
-  if (reg && Notification.permission === "granted") {
-    console.log("Service Worker siap untuk menampilkan notifikasi di desktop.");
-  }
-});
-
-reg.showNotification("Notifikasi dari PWA", {
-  body: "Berhasil! Ini notifikasi test dari Service Worker (Desktop).",
-  icon: "/images/icon-192x192.png",
-  badge: "/images/icon-192x192.png",
-  tag: "pwa-test",               // mencegah Chrome menggabung notif
-  renotify: true,                // biar notif baru selalu tampil
-  requireInteraction: true,      // notif tidak langsung hilang
-});
