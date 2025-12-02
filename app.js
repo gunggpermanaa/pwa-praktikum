@@ -1,60 +1,117 @@
+// app.js — versi bersih & bebas error
 // ==============================
 // Register Service Worker
 // ==============================
 if ("serviceWorker" in navigator) {
-    window.addEventListener("load", () => {
-        navigator.serviceWorker.register("/sw.js")
-            .then(registration => {
-                console.log("Service Worker registered:", registration);
-            })
-            .catch(err => {
-                console.error("Service Worker registration failed:", err);
-            });
-    });
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js")
+      .then(registration => {
+        console.log("Service Worker registered:", registration);
+      })
+      .catch(err => {
+        console.error("Service Worker registration failed:", err);
+      });
+  });
 }
 
 // ==============================
-// Request Permission (Optional)
-// ==============================
-if ("Notification" in window) {
-    Notification.requestPermission();
-}
-
-// ==============================
-// Tes Notifikasi
+// Elements (defensive)
 // ==============================
 const notifyBtn = document.getElementById("notifyBtn");
 const notifStatus = document.getElementById("notifStatus");
 
-notifyBtn.addEventListener("click", () => {
-    // Ubah tampilan tombol
-    notifyBtn.innerText = "Mengirim...";
+// Jika elemen tidak ditemukan, hentikan dan log
+if (!notifyBtn || !notifStatus) {
+  console.warn("Elemen #notifyBtn atau #notifStatus tidak ditemukan. Pastikan HTML mempunyai elemen tersebut.");
+  // Jangan lanjutkan agar tidak error
+} else {
+
+  // ==============================
+  // DETEKSI iOS / Safari (opsional)
+  // ==============================
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+  const isPWA = window.navigator.standalone === true; // true ketika dibuka sebagai PWA di iOS
+
+  if (isIOS && isSafari && !isPWA) {
+    // iOS Safari non-PWA: notifikasi web tidak didukung -> disable tombol
+    notifStatus.innerText = "👉 Untuk notifikasi di iPhone: install aplikasi ke Home Screen (Share → Add to Home Screen).";
     notifyBtn.disabled = true;
-    notifyBtn.style.opacity = "0.7";
+    notifyBtn.style.opacity = "0.5";
+    notifyBtn.style.cursor = "not-allowed";
+  }
 
-    Notification.requestPermission().then(permission => {
-        if (permission === "granted") {
+  // ==============================
+  // Helper: Reset tombol
+  // ==============================
+  function resetButton(delay = 1000) {
+    setTimeout(() => {
+      notifyBtn.innerText = "Tes Notifikasi";
+      notifyBtn.disabled = false;
+      notifyBtn.style.opacity = "1";
+      notifyBtn.style.cursor = "pointer";
+    }, delay);
+  }
 
-            new Notification("Notifikasi dari PWA", {
-                body: "Berhasil! Ini notifikasi test.",
-                icon: "/images/icon-192x192.png"
-            });
+  // ==============================
+  // Click handler: kirim notifikasi via Service Worker
+  // ==============================
+  notifyBtn.addEventListener("click", async () => {
+    try {
+      // UI feedback
+      notifyBtn.innerText = "Mengirim...";
+      notifyBtn.disabled = true;
+      notifyBtn.style.opacity = "0.7";
 
-            notifStatus.innerText = "✅ Notifikasi berhasil dikirim!";
-        } else {
-            notifStatus.innerText = "❌ Notifikasi ditolak.";
-        }
+      // 1) Request permission jika belum granted
+      if (!("Notification" in window)) {
+        notifStatus.innerText = "Browser tidak mendukung Notification API.";
+        resetButton();
+        return;
+      }
 
-        // Kembalikan tombol normal
-        setTimeout(() => {
-            notifyBtn.innerText = "Tes Notifikasi";
-            notifyBtn.disabled = false;
-            notifyBtn.style.opacity = "1";
-        }, 1000);
+      const permission = await Notification.requestPermission();
+      if (permission !== "granted") {
+        notifStatus.innerText = "❌ Izinkan notifikasi terlebih dahulu.";
+        resetButton();
+        return;
+      }
 
-        // Hilangkan teks status setelah 2 detik
-        setTimeout(() => {
-            notifStatus.innerText = "";
-        }, 2000);
-    });
-});
+      // 2) Pastikan service worker terdaftar / siap
+      let reg;
+      try {
+        // prefer navigator.serviceWorker.getRegistration() but fallback to ready
+        reg = await navigator.serviceWorker.getRegistration();
+        if (!reg) reg = await navigator.serviceWorker.ready;
+      } catch (e) {
+        // navigator.serviceWorker.ready mungkin error di browser very old
+        console.warn("Service Worker ready/getRegistration error:", e);
+      }
+
+      if (!reg) {
+        notifStatus.innerText = "❌ Service Worker belum terdaftar atau tidak tersedia.";
+        resetButton();
+        return;
+      }
+
+      // 3) Tampilkan notifikasi lewat Service Worker (works on Android)
+      reg.showNotification("Notifikasi dari PWA", {
+        body: "Berhasil! Ini notifikasi test dari Service Worker.",
+        icon: "/images/icon-192x192.png",
+        badge: "/images/icon-192x192.png",
+        vibrate: [100, 50, 100],
+        data: { url: "/" } // data bisa dipakai saat notificationclick
+      });
+
+      notifStatus.innerText = "✅ Notifikasi berhasil dikirim!";
+      // hapus status setelah beberapa detik
+      setTimeout(() => { notifStatus.innerText = ""; }, 3000);
+
+      resetButton(800);
+    } catch (err) {
+      console.error("Error saat mengirim notifikasi:", err);
+      notifStatus.innerText = "❌ Terjadi error saat mengirim notifikasi.";
+      resetButton();
+    }
+  });
+}
